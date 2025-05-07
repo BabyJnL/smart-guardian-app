@@ -33,6 +33,8 @@ android {
         versionName = flutter.versionName
     }
 
+    ndkVersion = "27.0.12077973"
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
