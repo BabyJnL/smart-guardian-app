@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:smart_guardian_final/pages/realtime_log.dart';
 import 'firebase_options.dart';
+
+import 'package:smart_guardian_final/helpers/shared_preferences_helper.dart';
 
 // Import Pages
 import 'package:smart_guardian_final/pages/login.dart';
@@ -10,7 +13,9 @@ void main() async
     try 
     {
         WidgetsFlutterBinding.ensureInitialized();
+        await SharedPreferencesHelper().init();
         await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        
         print('Firebase initialized');
     } 
     catch(e) 
@@ -46,7 +51,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginPage(),
+      home: (SharedPreferencesHelper().getDeviceID() == null) ? LoginPage() : RealtimeLogPage(),
     );
   }
 }

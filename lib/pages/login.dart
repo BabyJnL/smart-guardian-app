@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:smart_guardian_final/helpers/shared_preferences_helper.dart';
+
+// Import Service & Repository
+import '../services/auth_service.dart';
+import '../repositories/device_repository.dart';
+
+// Import Pages
+import 'package:smart_guardian_final/pages/realtime_log.dart';
+
 class LoginPage extends StatefulWidget
 {
     const LoginPage({ super.key });
@@ -10,12 +19,69 @@ class LoginPage extends StatefulWidget
 
 class _LoginPageState extends State<LoginPage>
 {
-    final deviceIdController = TextEditingController();
+    final _deviceIdController = TextEditingController();
+    final _authService = AuthService(DeviceRepository());
+
+    bool _isLoading = false;
+
+    void _login() async {
+        setState(() {
+            _isLoading = true;
+        });
+
+        try 
+        {
+            final String deviceId = _deviceIdController.text.trim();
+            final authSuccess = await _authService.loginWithDeviceId(deviceId);
+
+            setState(() {
+                _isLoading = false;
+            });
+
+            if(authSuccess) 
+            {
+                await SharedPreferencesHelper().setDeviceID(deviceId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Login berhasil!'),  
+                        backgroundColor: Colors.green,
+                    ),
+                );
+                Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => const RealtimeLogPage(),
+                    ),
+                );
+            } 
+            else 
+            {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Device ID tidak ditemukan.'),
+                        backgroundColor: Colors.red,
+                    ),
+                );
+            }
+        } 
+        catch (e) 
+        {
+            setState(() {
+                _isLoading = false;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Terjadi kesalahan: $e'),
+                backgroundColor: Colors.red,
+            ),
+            );
+        }
+    }
 
     @override
     void dispose() 
     {
-        deviceIdController.dispose();
+        _deviceIdController.dispose();
         super.dispose();
     }
 
@@ -40,7 +106,7 @@ class _LoginPageState extends State<LoginPage>
                         Padding(
                             padding: EdgeInsets.symmetric(horizontal: 32, vertical: 0),
                             child: TextFormField(
-                                controller: deviceIdController,
+                                controller: _deviceIdController,
                                 decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
@@ -62,7 +128,7 @@ class _LoginPageState extends State<LoginPage>
                                 ),
                                 side: BorderSide(color: Colors.white)
                             ),
-                            onPressed: () { },
+                            onPressed: _isLoading ? null : _login,
                             child: Text(
                                 'Log In',
                                 style: TextStyle(
