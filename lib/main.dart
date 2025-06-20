@@ -1,21 +1,35 @@
+import 'dart:convert';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:smart_guardian_final/pages/realtime_log.dart';
+import 'package:smart_guardian_final/models/log.dart';
 import 'firebase_options.dart';
 
 import 'package:smart_guardian_final/helpers/shared_preferences_helper.dart';
 
 // Import Pages
 import 'package:smart_guardian_final/pages/login.dart';
+import 'package:smart_guardian_final/tab/tab_view.dart';
+
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async 
+// {
+//   final Map<String, dynamic> data = message.data;
+//   print('Handling a background message ${data}');
+// }
 
 void main() async 
 {
     try 
     {
         WidgetsFlutterBinding.ensureInitialized();
-        await SharedPreferencesHelper().init();
-        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
         
+        await SharedPreferencesHelper().init();
+        await Firebase.initializeApp();
+        // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        await _initializeMessaging();
+
         print('Firebase initialized');
     } 
     catch(e) 
@@ -23,6 +37,16 @@ void main() async
         print('Firebase init error: $e');
     }
     runApp(const MyApp());
+}
+
+Future<void> _initializeMessaging() async
+{
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('📢 Notifikasi diterima: ${message.notification?.title}');
+    });
 }
 
 class MyApp extends StatelessWidget {
@@ -51,7 +75,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: (SharedPreferencesHelper().getDeviceID() == null) ? LoginPage() : RealtimeLogPage(),
+      home: (SharedPreferencesHelper().getDeviceID() == null) ? LoginPage() : TabView(),
     );
   }
 }

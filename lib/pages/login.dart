@@ -1,13 +1,16 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'package:smart_guardian_final/helpers/shared_preferences_helper.dart';
+import 'package:smart_guardian_final/services/messaging_service.dart';
 
 // Import Service & Repository
 import '../services/auth_service.dart';
 import '../repositories/device_repository.dart';
 
 // Import Pages
-import 'package:smart_guardian_final/pages/realtime_log.dart';
+import 'package:smart_guardian_final/tab/tab_view.dart';
 
 class LoginPage extends StatefulWidget
 {
@@ -31,15 +34,24 @@ class _LoginPageState extends State<LoginPage>
 
         try 
         {
+            final notifPermissionGranted = await MessagingService().getAuthorizationStatus();
+            if(!notifPermissionGranted)
+            {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('You need to grant notification permission to use this app. Please go to settings and grant permission.'),  
+                        backgroundColor: Colors.red,
+                    ),
+                );
+                return;
+            }
+
             final String deviceId = _deviceIdController.text.trim();
             final authSuccess = await _authService.loginWithDeviceId(deviceId);
 
-            setState(() {
-                _isLoading = false;
-            });
-
             if(authSuccess) 
             {
+                FirebaseMessaging.instance.subscribeToTopic('deteksi-suara');
                 await SharedPreferencesHelper().setDeviceID(deviceId);
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -47,9 +59,10 @@ class _LoginPageState extends State<LoginPage>
                         backgroundColor: Colors.green,
                     ),
                 );
+                await Future.delayed(Duration(seconds: 2));
                 Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (context) => const RealtimeLogPage(),
+                        builder: (context) => const TabView(),
                     ),
                 );
             } 
@@ -65,16 +78,18 @@ class _LoginPageState extends State<LoginPage>
         } 
         catch (e) 
         {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text('Terjadi kesalahan: $e'),
+                    backgroundColor: Colors.red,
+                ),
+            );
+        }
+        finally 
+        {
             setState(() {
                 _isLoading = false;
             });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Terjadi kesalahan: $e'),
-                backgroundColor: Colors.red,
-            ),
-            );
         }
     }
 

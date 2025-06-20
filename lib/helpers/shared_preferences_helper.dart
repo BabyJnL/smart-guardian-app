@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smart_guardian_final/models/log.dart';
 
 class SharedPreferencesHelper {
     // Instance Singleton
@@ -39,14 +43,16 @@ class SharedPreferencesHelper {
         await _preferences?.remove('deviceID');
     }
 
-    Future<void> saveLastOpenedTime() async 
+    Future<void> saveLastActive() async
     {
-        print("Saving last opened time: ${DateTime.now().millisecondsSinceEpoch}");
-        await _preferences?.setInt('lastOpened', DateTime.now().millisecondsSinceEpoch);
+        await _preferences?.setInt('lastActiveMillis', DateTime.now().millisecondsSinceEpoch);
     }
 
-    Future<int?> getLastOpenedTime() async 
+    Future<DateTime?> getLastActive() async 
     {
-        return _preferences?.getInt('lastOpened');
+        final millis = await _preferences?.getInt('lastActiveMillis');
+        if(millis == null)
+            return null;
+        return DateTime.fromMillisecondsSinceEpoch(millis);
     }
 }
