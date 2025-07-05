@@ -55,4 +55,14 @@ class SharedPreferencesHelper {
             return null;
         return DateTime.fromMillisecondsSinceEpoch(millis);
     }
+
+    Future<void> saveStreamUri(String uri) async
+    {
+        await _preferences?.setString('streamUri', uri);
+    }
+
+    String? getStreamUri()
+    {
+        return _preferences?.getString('streamUri');
+    }
 }
